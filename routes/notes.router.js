@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-
+const knex = require('../knex');
 // Create an router instance (aka "mini-app")
 const router = express.Router();
 
@@ -15,7 +15,25 @@ const notes = simDB.initialize(data);
 // Get All (and search by query)
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
+
   const { searchTerm } = req.query;
+
+  if (searchTerm) {
+    knex('notes')
+      .select()
+      .where('title', 'like', `%${searchTerm}%`)
+      .orWhere('content', 'like', `%${searchTerm}%`)
+      .then(result => res.json(result))
+      .catch(err => next(err));
+  }
+  else {
+
+    knex('notes')
+      .select()
+      .then(result => res.json(result))
+      .catch(err => next(err));
+  }
+
   /* 
   notes.filter(searchTerm)
     .then(list => {
@@ -29,6 +47,10 @@ router.get('/notes', (req, res, next) => {
 router.get('/notes/:id', (req, res, next) => {
   const noteId = req.params.id;
 
+  knex('notes')
+    .where({ id: `${noteId}` })
+    .then(result => res.json(result))
+    .catch(err => next(err));
   /*
   notes.find(noteId)
     .then(item => {
@@ -62,6 +84,12 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
+  knex('notes')
+    .where({ id: `${noteId}` })
+    .update(updateObj)
+    .then(result => res.json(result))
+    .catch(err => next(err));
+
   /*
   notes.update(noteId, updateObj)
     .then(item => {
@@ -78,7 +106,7 @@ router.put('/notes/:id', (req, res, next) => {
 /* ========== POST/CREATE ITEM ========== */
 router.post('/notes', (req, res, next) => {
   const { title, content } = req.body;
-  
+
   const newItem = { title, content };
   /***** Never trust users - validate input *****/
   if (!newItem.title) {
@@ -86,6 +114,12 @@ router.post('/notes', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
+
+  knex('notes')
+    .insert(newItem)
+    .returning(['id', 'title', 'content'])
+    .then(result => res.json(result))
+    .catch(err => next(err));
 
   /*
   notes.create(newItem)
@@ -100,8 +134,12 @@ router.post('/notes', (req, res, next) => {
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/notes/:id', (req, res, next) => {
-  const id = req.params.id;
-  
+  const noteId = req.params.id;
+  knex('notes')
+    .where('id', noteId)
+    .del()
+    .then(() => res.status(204).end())
+    .catch(err => next(err));
   /*
   notes.delete(id)
     .then(count => {
