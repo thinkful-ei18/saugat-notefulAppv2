@@ -49,6 +49,7 @@ router.get('/notes/:id', (req, res, next) => {
 
   knex('notes')
     .where({ id: `${noteId}` })
+    .first()
     .then(result => res.json(result))
     .catch(err => next(err));
   /*
