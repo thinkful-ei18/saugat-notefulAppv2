@@ -52,17 +52,6 @@ router.get('/notes/:id', (req, res, next) => {
     .first()
     .then(result => res.json(result))
     .catch(err => next(err));
-  /*
-  notes.find(noteId)
-    .then(item => {
-      if (item) {
-        res.json(item);
-      } else {
-        next();
-      }
-    })
-    .catch(err => next(err));
-  */
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
