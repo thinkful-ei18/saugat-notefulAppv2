@@ -70,7 +70,7 @@ router.put('/notes/:id', (req, res, next) => {
   const noteId = req.params.id;
   /***** Never trust users - validate input *****/
   const updateObj = {};
-  const updateableFields = ['title', 'content'];
+  const updateableFields = ['title', 'content', 'folder_id'];
 
   updateableFields.forEach(field => {
     if (field in req.body) {

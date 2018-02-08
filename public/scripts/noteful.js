@@ -98,13 +98,22 @@ const noteful = (function () {
       if (folderId !== store.currentNote.folder_id) {
         store.currentNote = {};
       }
-
-      api.search('/v2/notes', store.currentQuery)
-        .then(response => {
-          store.notes = response;
-          console.log(response);
-          render();
-        });
+      if (!folderId) {
+        api.search('/v2/notes', store.currentQuery)
+          .then(response => {
+            store.notes = response;
+            console.log(response);
+            render();
+          });
+      }
+      else {
+        api.search(`/v2/folders/${folderId}/notes`, store.currentQuery)
+          .then(response => {
+            store.notes = response;
+            console.log(response);
+            render();
+          });
+      }
     });
   }
 
@@ -132,6 +141,7 @@ const noteful = (function () {
         id: store.currentNote.id,
         title: editForm.find('.js-note-title-entry').val(),
         content: editForm.find('.js-note-content-entry').val(),
+        folder_id: editForm.find('.js-note-folder-entry').val()
       };
 
       if (store.currentNote.id) {

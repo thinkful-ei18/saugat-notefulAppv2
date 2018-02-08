@@ -26,6 +26,17 @@ router.get('/folders/:id', (req, res, next) => {
 
 });
 
+router.get('/folders/:id/notes/', (req, res, next) => {
+  const folderId = req.params.id;
+  knex('notes')
+    .where({ folder_id: folderId })
+    .then(results => {
+      res.json(results);
+    })
+    .catch(next);
+
+});
+
 
 router.put('/folders/:id', (req, res, next) => {
   const noteId = req.params.id;
