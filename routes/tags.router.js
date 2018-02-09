@@ -1,53 +1,45 @@
 'use strict';
 
 const express = require('express');
-const knex = require('../knex');
-const {UNIQUE_VIOLATION} = require('pg-error-constants')
-// Create an router instance (aka "mini-app")
 const router = express.Router();
 
+const knex = require('../knex');
+const { UNIQUE_VIOLATION } = require('pg-error-constants');
+
+
 router.get('/tags', (req, res, next) => {
-  const { searchTerm } = req.query;
-
-  if (searchTerm) {
-    knex('tags')
-      .select()
-      .where('name', 'like', `%${searchTerm}%`)
-      .then(result => res.json(result))
-      .catch(err => next(err));
-  }
-  else {
-
-    knex('tags')
-      .select()
-      .then(result => res.json(result))
-      .catch(err => next(err));
-    // }
-
-  }
+  knex.select('id', 'name')
+    .from('tags')
+    .then(results => {
+      res.json(results);
+    })
+    .catch(next);
 });
 
 router.get('/tags/:id', (req, res, next) => {
-  const tagId = req.params.id;
-
-  knex('tags')
-    .where({ id: tagId })
-    .first()
-    .then(result => res.json(result))
-    .catch(err => next(err));
+  knex.select('id', 'name')
+    .where('id', req.params.id)
+    .from('tags')
+    .then(result => {
+      if (result) {
+        res.json(result);
+      } else {
+        next();
+      }
+    })
+    .catch(next);
 });
 
 
 router.post('/tags', (req, res, next) => {
   const { name } = req.body;
 
-  /***** Never trust users. Validate input *****/
+
   if (!name) {
     const err = new Error('Missing `name` in request body');
     err.status = 400;
     return next(err);
   }
-
 
   const newItem = { name };
 
@@ -61,38 +53,57 @@ router.post('/tags', (req, res, next) => {
       if (err.code === UNIQUE_VIOLATION && err.constraint === 'tags_name_key') {
         err = new Error('Tags name is already taken');
         err.status = 409;
-      }
+      } 
       next(err);
     });
 });
 
+
 router.put('/tags/:id', (req, res, next) => {
-  const noteId = req.params.id;
-  /***** Never trust users - validate input *****/
-  const updateObj = {};
-  const updateableFields = ['name'];
+  const { name } = req.body;
 
-  updateableFields.forEach(field => {
-    if (field in req.body) {
-      updateObj[field] = req.body[field];
-    }
-  });
 
-  /***** Never trust users - validate input *****/
   if (!name) {
     const err = new Error('Missing `name` in request body');
     err.status = 400;
     return next(err);
   }
 
-  knex('notes')
-    .where({ id: `${noteId}` })
-    .update(updateObj)
-    .then(result => res.json(result))
-    .catch(err => next(err));
+  const updateItem = { name };
 
+  knex('tags')
+    .update(updateItem)
+    .where('id', req.params.id)
+    .returning(['id', 'name'])
+    .then(([result]) => {
+      if (result) {
+        res.json(result);
+      } else {
+        next(); 
+      }
+    })
+    .catch(err => {
+      if (err.code === UNIQUE_VIOLATION && err.constraint === 'tags_name_key') {
+        err = new Error('Tags name is already taken');
+        err.status = 409;
+      } 
+      next(err);
+    });
 });
 
 
+router.delete('/tags/:id', (req, res, next) => {
+  knex.del()
+    .where('id', req.params.id)
+    .from('tags')
+    .then(count => {
+      if (count) {
+        res.status(204).end();
+      } else {
+        next(); 
+      }
+    })
+    .catch(next);
+});
 
 module.exports = router;
