@@ -46,7 +46,7 @@ router.get('/notes', (req, res, next) => {
       res.json(hydrated);
     })
     .catch(err => {
-      console.error(err);
+      next(err);
     });
 });
 
@@ -68,7 +68,7 @@ router.get('/notes/:id', (req, res, next) => {
     .leftJoin('tags', 'tags.id', 'notes_tags.tag_id')
     .where('notes.id', noteId)
     .then(result => {
-      if (result) {
+      if (result.length > 0) {
         const treeize = new Treeize();
         treeize.grow(result);
         const hydrated = treeize.getData();
@@ -77,7 +77,9 @@ router.get('/notes/:id', (req, res, next) => {
         next(); // fall-through to 404 handler
       }
     })
-    .catch(next);
+    .catch(err => {
+      next(err);
+    });
 
 });
 
@@ -128,7 +130,7 @@ router.post('/notes', (req, res, next) => {
       }
     })
     .catch(err => {
-      console.error(err);
+      next(err);
     });
 });
 
@@ -174,7 +176,7 @@ router.put('/notes/:id', (req, res, next) => {
         .where('notes.id', noteId);
     })
     .then(result => {
-      if (result) {
+      if (result.length > 0) {
         const treeize = new Treeize();
         treeize.grow(result);
         const hydrated = treeize.getData();
@@ -184,7 +186,7 @@ router.put('/notes/:id', (req, res, next) => {
       }
     })
     .catch(err => {
-      console.error(err);
+      next(err);
     });
 });
 
@@ -203,5 +205,4 @@ router.delete('/notes/:id', (req, res, next) => {
     .catch(next);
 });
 
-module.exports = router;
 module.exports = router;
