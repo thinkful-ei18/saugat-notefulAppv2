@@ -105,9 +105,11 @@ router.post('/notes', (req, res, next) => {
     .returning('id')
     .then(([id]) => {
       noteId = id;
-      const tagsInsert = tags.map(tagId => ({ note_id: noteId, tag_id: tagId }));
-      return knex.insert(tagsInsert)
-        .into('notes_tags');
+      if (tags !== undefined) {
+        const tagsInsert = tags.map(tagId => ({ note_id: noteId, tag_id: tagId }));
+        return knex.insert(tagsInsert)
+          .into('notes_tags');
+      }
     })
     .then(() => {
       return knex.select('notes.id', 'title', 'content', 'folder_id',
